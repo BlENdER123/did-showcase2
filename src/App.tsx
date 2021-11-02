@@ -33,8 +33,8 @@ function App() {
         <div className="App">
           <Header></Header>
           <Switch>
-            <Route exact path="/" component={StartPage}></Route>
-            <Route exact path="/connect-wallet" component={ConnectWalletPage}></Route>
+            <Route exact path="/" component={ConnectWalletPage}></Route>
+            {/* <Route exact path="/connect-wallet" component={ConnectWalletPage}></Route> */}
             <Route exact path="/welcome-did" component={WelcomeDidPage}></Route>
             <Route exact path="/login-did" component={LoginDidPage}></Route>
             <Route exact path="/login" component={LoginPage}></Route>

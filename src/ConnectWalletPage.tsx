@@ -3,9 +3,11 @@ import backspace from "./img/backspace.png"
 import crypto from 'crypto'
 
 const bip39 = require('bip39');
+const pidCrypt = require("pidcrypt");
+require("pidcrypt/aes_cbc");
+
 
 function ConnectWalletPage() {
-
     const [curentPage, setCurentPage] = useState(0);
     const [curentPageLogin, setCurentPageLogin] = useState(0);
     
@@ -21,7 +23,16 @@ function ConnectWalletPage() {
     const [inputV3, setInputV3] = useState("");
     const [inputV4, setInputV4] = useState("");
 
+    const [inputL1, setInputL1] = useState("");
+    const [inputL2, setInputL2] = useState("");
+    const [inputL3, setInputL3] = useState("");
+    const [inputL4, setInputL4] = useState("");
+
+    let pass = "";
+
     const [seed, setSeed] = useState("");
+ 
+    const [seedLogin, setSeedLogin] = useState("");
 
     const [errorModal, setErrorModal] = useState([{
         hidden: false,
@@ -51,13 +62,16 @@ function ConnectWalletPage() {
             } else {
                 setErrorModal([{
                     hidden: true,
-                    message: "Set full pin code"
+                    message: "Set full PIN"
                 }]);
             }
         }
         if(curentPage === 3) {
             if(input1 === inputV1 && input2 === inputV2 && input3 === inputV3 && input4 === inputV4){
                 setCurentPage(curentPage+1);
+                let temp = [input1, input2, input3, input4];
+                pass = temp.join("");
+                
                 genSeed();
             } else {
                 setErrorModal([{
@@ -77,7 +91,42 @@ function ConnectWalletPage() {
         if(curentPageLogin === 0) {
             setCurentPageLogin(1);
             setCurentPage(99);
+        } 
+        if(curentPageLogin === 1) {
+            if(seedLogin !== ""){
+                setCurentPageLogin(curentPageLogin+1);
+            } else {
+                setErrorModal([{
+                    hidden: true,
+                    message: "Enter seed phrase"
+                }]);
+            }
         }
+        if(curentPageLogin === 2) {
+            if(inputL1 !== "" && inputL2 !== "" && inputL3 !== "" && inputL4 !== ""){
+                let temp = [inputL1, inputL2, inputL3, inputL4];
+                let pass = temp.join("");
+
+                const aes = new pidCrypt.AES.CBC();
+
+                if(seedLogin === aes.decryptText(localStorage.seedHash, pass)) {
+                    setCurentPageLogin(curentPageLogin+1);
+                    
+                } else {
+                    setErrorModal([{
+                        hidden: true,
+                        message: "Incorrect seed phrase or PIN code"
+                    }]);
+                }
+
+            } else {
+                
+                setErrorModal([{
+                    hidden: true,
+                    message: "Enter full PIN"
+                }]);
+            }
+        } 
     }
 
     function closeError() {
@@ -125,6 +174,25 @@ function ConnectWalletPage() {
         }
     }
 
+    function setValueInputL(num: string) {
+        if(inputL1 === "") {
+            setInputL1(num);
+            return;
+        }
+        if(inputL2 === "") {
+            setInputL2(num);
+            return;
+        }
+        if(inputL3 === "") {
+            setInputL3(num);
+            return;
+        }
+        if(inputL4 === "") {
+            setInputL4(num);
+            return;
+        }
+    }
+
     function deletevalueInput() {
         if(input4 !== "") {
             setInput4("");
@@ -163,32 +231,52 @@ function ConnectWalletPage() {
         }
     }
 
+    function deletevalueInputL() {
+        if(inputL4 !== "") {
+            setInputL4("");
+            return;
+        }
+        if(inputL3 !== "") {
+            setInputL3("");
+            return;
+        }
+        if(inputL2 !== "") {
+            setInputL2("");
+            return;
+        }
+        if(inputL1 !== "") {
+            setInputL1("");
+            return;
+        }
+    }
+
     function genSeed(){
 
         const mnemonic = bip39.generateMnemonic();
-        console.log(mnemonic);
-        
-        // const mnemonicHash = bip39.mnemonicToSeedSync(mnemonic).toString('hex');
-        // console.log(mnemonicHash);
-
-        const mnemonicHash = bip39.mnemonicToEntropy(mnemonic);
-        console.log(mnemonicHash);
-       
-
-        const unmnemonic = bip39.entropyToMnemonic(mnemonicHash);
-        console.log(unmnemonic);
         
         setSeed(mnemonic);
+        console.log(mnemonic);
+        console.log(pass);
+
+        const aes = new pidCrypt.AES.CBC();
+        let encrypted = aes.encryptText(mnemonic, pass);
+        
+        localStorage.setItem('seedHash', encrypted);
+    }
+
+    function resetPages() {
+        setCurentPage(0);
+        setCurentPageLogin(0);
     }
 
 
     return(
-        <div className={(curentPage===0  || curentPageLogin===1 )?"modal-connect modal-connect-first": "modal-connect"}>
+        <div className={(curentPage===0  || curentPageLogin===1 || curentPageLogin === 3)?"modal-connect modal-connect-first": "modal-connect"}>
             <div className={(curentPage===0 && errorModal[0].hidden===false)?"page": "hide"}>
-                <a className="close" href="#/">
+                <button className="close" onClick={resetPages}>
                     <span></span>
                     <span></span>
-                </a>
+                </button>
                 <div className="title">Welcome to DefiSpace!</div>
                 <div className="content content-first">
                     <button className="connect-btn zeropage-btn" onClick={NextPageLogin}>Log In</button>
@@ -197,23 +285,55 @@ function ConnectWalletPage() {
 
             </div>
             <div className={(curentPageLogin===1 && errorModal[0].hidden===false)?"page": "hide"}>
-                <a className="close" href="#/">
+                <button className="close" onClick={resetPages}>
                     <span></span>
                     <span></span>
-                </a>
+                </button>
                 <div className="title">Enter your seed phrase.</div>
-                <div className="content">
-                    <textarea name="" id="" cols={35} rows={4}></textarea>
+                <div className="seed-enter">
+                    <textarea name="" id="" cols={35} rows={4}  onChange={(ev) => {setSeedLogin(ev.target.value)}}></textarea>
                     <div className="break"></div>
-                    <a href="#/welcome-did"><button className="connect-btn zeropage-btn" onClick={NextPageLogin}>Connect</button></a>
+                    {/* <button className="connect-btn zeropage-btn" onClick={NextPageLogin}>Connect</button> */}
                 </div>
 
             </div>
+            <div className={(curentPageLogin === 2 && errorModal[0].hidden===false)?"page": "hide"}>
+                <div className="title">Enter your PIN</div>
+                    <div className="pin-inputs">
+                        <input type="text" value={inputL1} autoFocus maxLength={1}/>
+                        <input type="text" value={inputL2} maxLength={1}/>
+                        <input type="text" value={inputL3} maxLength={1}/>
+                        <input type="text" value={inputL4} maxLength={1}/>
+                        <button onClick={deletevalueInputL}><img src={backspace} alt="backspace" /></button>
+                    </div>
+                    <div className="pin-board">
+                        <div className="board">
+                            <button onClick={() =>setValueInputL("1")}>1</button>
+                            <button onClick={() =>setValueInputL("2")}>2</button>
+                            <button onClick={() =>setValueInputL("3")}>3</button>
+                            <div className="break"></div>
+                            <button onClick={() =>setValueInputL("4")}>4</button>
+                            <button onClick={() =>setValueInputL("5")}>5</button>
+                            <button onClick={() =>setValueInputL("6")}>6</button>
+                            <div className="break"></div>
+                            <button onClick={() =>setValueInputL("7")}>7</button>
+                            <button onClick={() =>setValueInputL("8")}>8</button>
+                            <button onClick={() =>setValueInputL("9")}>9</button>
+                            <div className="break"></div>
+                            <button onClick={() =>setValueInputL("0")}>0</button>
+                        </div>
+                    </div>
+            </div>
+            <div className={(curentPageLogin === 3 && errorModal[0].hidden===false)?"page": "hide"}>
+                <div className="title">Congratulations!</div>
+                <div className="subtitle">You have successfully logged into your account</div>
+
+            </div>
             <div className={(curentPage===1 && errorModal[0].hidden===false)?"page": "hide"}>
-                <a className="close" href="#/">
+                <button className="close" onClick={resetPages}>
                     <span></span>
                     <span></span>
-                </a>
+                </button>
                 <div className="title">Welcome to DefiSpace!</div>
                 <div className="subtitle">Just read the user`s agreement and set pin for registration</div>
                 <div className="content">
@@ -301,7 +421,7 @@ function ConnectWalletPage() {
                     {errorModal[0].message}
                 </div>
             </div>
-            <div className={(errorModal[0].hidden===false && curentPage > 0 && curentPageLogin !== 1)?"pagination": "hide"}>
+            <div className={(errorModal[0].hidden===false && curentPage > 0 && curentPageLogin > 4)?"pagination": "hide"}>
                 <div className="dots">
                     <button className={curentPage===1?"active dot": "dot"} onClick={()=>setCurentPage(1)}></button>
                     <button className={curentPage===2?"active dot": "dot"} onClick={()=>setCurentPage(2)}></button>
@@ -311,7 +431,21 @@ function ConnectWalletPage() {
                 <div className="break"></div>
                 <div className="next">
                     <button className={curentPage===4?"hide": "connect-btn"} onClick={NextPage}>Next</button>
-                    <button className={curentPage!==4?"hide": "connect-btn"} onClick={NextPage}>Great!</button>
+                    <button className={(curentPage!==4 && curentPageLogin > 4)?"hide": "connect-btn"} onClick={NextPage}>Great!</button>
+                </div>
+            </div>
+
+            <div className={(errorModal[0].hidden===false && curentPageLogin > 0 && curentPage > 4)?"pagination": "hide"}>
+                <div className="dots">
+                    <button className={curentPageLogin===1?"active dot": "dot"} onClick={()=>setCurentPageLogin(1)}></button>
+                    <button className={curentPageLogin===2?"active dot": "dot"} onClick={()=>setCurentPageLogin(2)}></button>
+                    <button className={curentPageLogin===3?"active dot": "dot"} onClick={()=>setCurentPageLogin(2)}></button>
+                </div> 
+                <div className="break"></div>
+                <div className="next">
+                    <button className={(curentPageLogin !== 1)? "hide" : "connect-btn zeropage-btn"} onClick={NextPageLogin}>Connect</button>
+                    <button className={(curentPageLogin !== 2)?"hide": "connect-btn"} onClick={NextPageLogin}>Next</button>
+                    <a href="#/welcome-did"><button className={(curentPageLogin < 3)?"hide": "connect-btn"}>Great!</button></a>
                 </div>
             </div>
         </div>

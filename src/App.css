@@ -64,6 +64,13 @@ a:hover{
   align-items: center;
 
 }
+.seed-enter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 60px;
+}
 .acc-logo{
   width: 33px;
   height: 33px;
@@ -110,7 +117,7 @@ a:hover{
   transform: translate(-50%, -50%);
 }
 .modal-connect-first {
-  height: 300px !important;
+  height: 350px !important;
 }
 .zeropage-btn {
   display: block;
@@ -167,6 +174,7 @@ a:hover{
   align-items: center;
   height: 200px;
   width: 100%;
+  margin-top: 30px;
 }
 .content-first {
   background-color: transparent !important;
