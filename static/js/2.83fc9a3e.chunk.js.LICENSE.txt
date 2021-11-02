@@ -15,6 +15,10 @@ object-assign
 
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
+/*!Copyright (c) 2009 pidder <www.pidder.com>*/
+
+/*!Copyright (c) 2009-2015 pidder, https://www.pidder.de											*/
+
 /** @license React v0.20.2
  * scheduler.production.min.js
  *
